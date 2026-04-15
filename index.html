@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GG NETWORKS タスクボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080b10;
+  --bg2: #0d1117;
+  --bg3: #161b22;
+  --bg4: #1c2230;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #c9d1d9;
+  --text2: #8b949e;
+  --text3: #555f6d;
+  --accent-shogai: #ff4d6d;
+  --accent-toiawase: #4d9fff;
+  --accent-shanitsu: #f4b942;
+  --accent-mitsumori: #3ddc97;
+  --red: #ff4d6d;
+  --amber: #f4b942;
+  --green: #3ddc97;
+  --star: #f4b942;
+  --radius: 10px;
+  --font: 'Noto Sans JP', sans-serif;
+  --mono: 'Share Tech Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: var(--font);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: #fff;
+  letter-spacing: 0.12em;
+}
+.header-logo span { color: var(--accent-toiawase); }
+.header-clock {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text3);
+}
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 12px 24px 0;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  border-bottom: none;
+  position: relative;
+  bottom: -1px;
+}
+.tab.active {
+  color: var(--text);
+  background: var(--bg);
+  border-color: var(--border);
+}
+.tab:hover:not(.active) { color: var(--text2); }
+
+/* ===== BOARD ===== */
+.board {
+  padding: 20px 24px;
+  display: none;
+}
+.board.active { display: block; }
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+/* ===== COLUMN ===== */
+.col {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.col-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.col-title .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.col-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg3);
+  padding: 1px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.col-add {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.col-add:hover { background: var(--bg4); color: #fff; border-color: var(--border2); }
+
+.col[data-cat="障害"] .col-title { color: var(--accent-shogai); }
+.col[data-cat="障害"] .dot { background: var(--accent-shogai); }
+.col[data-cat="問い合わせ"] .col-title { color: var(--accent-toiawase); }
+.col[data-cat="問い合わせ"] .dot { background: var(--accent-toiawase); }
+.col[data-cat="社内タスク"] .col-title { color: var(--accent-shanitsu); }
+.col[data-cat="社内タスク"] .dot { background: var(--accent-shanitsu); }
+.col[data-cat="見積もり依頼"] .col-title { color: var(--accent-mitsumori); }
+.col[data-cat="見積もり依頼"] .dot { background: var(--accent-mitsumori); }
+
+.col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+
+/* ===== TASK CARD ===== */
+.task-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.task-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+.col[data-cat="障害"] .task-card::before { background: var(--accent-shogai); }
+.col[data-cat="問い合わせ"] .task-card::before { background: var(--accent-toiawase); }
+.col[data-cat="社内タスク"] .task-card::before { background: var(--accent-shanitsu); }
+.col[data-cat="見積もり依頼"] .task-card::before { background: var(--accent-mitsumori); }
+
+.task-card:hover { background: var(--bg4); border-color: var(--border2); transform: translateY(-1px); }
+.task-card.overdue { background: #1a0a0e; border-color: rgba(255,77,109,0.3); }
+.task-card.due-today { background: #1a150a; border-color: rgba(244,185,66,0.3); }
+
+.task-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e6edf3;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.card-assignee {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+}
+.card-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.card-field-label {
+  color: var(--text3);
+  min-width: 56px;
+  flex-shrink: 0;
+}
+.overdue-label {
+  color: var(--red);
+  font-weight: 700;
+  font-size: 10px;
+  margin-left: 4px;
+}
+.task-status {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.status-未着手 { background: rgba(139,148,158,0.15); color: #8b949e; }
+.status-進行中 { background: rgba(77,159,255,0.15); color: #4d9fff; }
+.status-完了 { background: rgba(61,220,151,0.15); color: #3ddc97; }
+
+.task-stars {
+  font-size: 11px;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.task-deadline {
+  font-size: 10px;
+  font-family: var(--mono);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.deadline-ok { color: var(--text3); }
+.deadline-today { color: var(--amber); background: rgba(244,185,66,0.1); }
+.deadline-overdue { color: var(--red); background: rgba(255,77,109,0.1); font-weight: 700; }
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center;
+  padding: 24px 12px;
+  color: var(--text3);
+  font-size: 11px;
+}
+
+/* ===== MODAL OVERLAY ===== */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.overlay.open { display: flex; }
+
+/* ===== MODAL ===== */
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e6edf3;
+}
+.modal-close {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--bg4); color: #fff; }
+.modal-body { padding: 20px; }
+
+/* ===== DETAIL MODAL ===== */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.detail-item { display: flex; flex-direction: column; gap: 4px; }
+.detail-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; font-weight: 500; }
+.detail-value { font-size: 13px; color: var(--text); }
+.detail-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e6edf3;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.detail-memo {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== FORM ===== */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 6px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.form-label .req { color: var(--red); margin-left: 3px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--accent-toiawase);
+}
+.form-select option { background: var(--bg3); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.star-input {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.star-btn {
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--border2);
+  transition: color 0.1s;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+}
+.star-btn.active { color: var(--star); }
+.star-btn:hover { color: var(--star); }
+
+/* ===== BUTTONS ===== */
+.btn {
+  padding: 8px 18px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+}
+.btn-primary {
+  background: var(--accent-toiawase);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.85; }
+.btn-danger {
+  background: rgba(255,77,109,0.15);
+  color: var(--red);
+  border: 1px solid rgba(255,77,109,0.3);
+}
+.btn-danger:hover { background: rgba(255,77,109,0.25); }
+.btn-secondary {
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-secondary:hover { background: var(--bg4); color: var(--text); }
+.btn-edit {
+  background: rgba(244,185,66,0.12);
+  color: var(--amber);
+  border: 1px solid rgba(244,185,66,0.25);
+}
+.btn-edit:hover { background: rgba(244,185,66,0.2); }
+
+/* ===== NOTION BANNER ===== */
+.notion-banner {
+  margin: 0 24px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text3);
+}
+.notion-banner.connected { border-color: rgba(61,220,151,0.3); }
+.notion-banner .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  flex-shrink: 0;
+}
+.notion-banner.connected .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .columns { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .columns { grid-template-columns: 1fr; }
+  .board { padding: 14px 12px; }
+  .header { padding: 12px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">GG <span>NETWORKS</span> — タスクボード</div>
+  <div class="header-clock" id="clk"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="taskboard">タスクボード</div>
+</div>
+
+<div class="board active" id="tab-taskboard">
+  <div class="notion-banner" id="notion-status">
+    <div class="dot"></div>
+    <span id="notion-status-text">Notion未接続 — デモデータを表示中</span>
+  </div>
+  <div class="columns">
+    <div class="col" data-cat="障害">
+      <div class="col-header">
+        <div class="col-title"><div class="dot"></div>障害</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="col-count" id="count-障害">0</div>
+          <button class="col-add" onclick="openAddModal('障害')" title="タスクを追加">＋</button>
+        </div>
+      </div>
+      <div class="col-body" id="col-障害"></div>
+    </div>
+    <div class="col" data-cat="問い合わせ">
+      <div class="col-header">
+        <div class="col-title"><div class="dot"></div>問い合わせ</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="col-count" id="count-問い合わせ">0</div>
+          <button class="col-add" onclick="openAddModal('問い合わせ')" title="タスクを追加">＋</button>
+        </div>
+      </div>
+      <div class="col-body" id="col-問い合わせ"></div>
+    </div>
+    <div class="col" data-cat="社内タスク">
+      <div class="col-header">
+        <div class="col-title"><div class="dot"></div>社内タスク</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="col-count" id="count-社内タスク">0</div>
+          <button class="col-add" onclick="openAddModal('社内タスク')" title="タスクを追加">＋</button>
+        </div>
+      </div>
+      <div class="col-body" id="col-社内タスク"></div>
+    </div>
+    <div class="col" data-cat="見積もり依頼">
+      <div class="col-header">
+        <div class="col-title"><div class="dot"></div>見積もり依頼</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="col-count" id="count-見積もり依頼">0</div>
+          <button class="col-add" onclick="openAddModal('見積もり依頼')" title="タスクを追加">＋</button>
+        </div>
+      </div>
+      <div class="col-body" id="col-見積もり依頼"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 詳細モーダル -->
+<div class="overlay" id="detail-overlay" onclick="closeDetailIfOutside(event)">
+  <div class="modal" id="detail-modal">
+    <div class="modal-header">
+      <div class="modal-title">タスク詳細</div>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-name" id="d-name"></div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">カテゴリ</div>
+          <div class="detail-value" id="d-cat"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">ステータス</div>
+          <div class="detail-value" id="d-status"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">担当者</div>
+          <div class="detail-value" id="d-assignee"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">期限</div>
+          <div class="detail-value" id="d-deadline"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">報告元</div>
+          <div class="detail-value" id="d-source"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">緊急度</div>
+          <div class="detail-value" id="d-stars"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">作成日時</div>
+          <div class="detail-value" id="d-created"></div>
+        </div>
+      </div>
+      <div class="detail-label">メモ</div>
+      <div class="detail-memo" id="d-memo">—</div>
+      <div class="detail-actions">
+        <button class="btn btn-edit" id="btn-edit-detail">編集</button>
+        <button class="btn btn-danger" id="btn-delete-detail">削除</button>
+        <button class="btn btn-secondary" onclick="closeDetail()" style="margin-left:auto">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 登録・編集モーダル -->
+<div class="overlay" id="form-overlay" onclick="closeFormIfOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="form-title">タスクを登録</div>
+      <button class="modal-close" onclick="closeForm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="f-id">
+      <div class="form-group">
+        <label class="form-label">タスク名<span class="req">*</span></label>
+        <input type="text" class="form-input" id="f-name" placeholder="タスクの内容を入力">
+      </div>
+      <div class="form-group">
+        <label class="form-label">カテゴリ<span class="req">*</span></label>
+        <select class="form-select" id="f-cat">
+          <option value="障害">障害</option>
+          <option value="問い合わせ">問い合わせ</option>
+          <option value="社内タスク">社内タスク</option>
+          <option value="見積もり依頼">見積もり依頼</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ステータス</label>
+        <select class="form-select" id="f-status">
+          <option value="未着手">未着手</option>
+          <option value="進行中">進行中</option>
+          <option value="完了">完了</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">担当者</label>
+        <select class="form-select" id="f-assignee">
+          <option value="">未定</option>
+          <option value="辻">辻</option>
+          <option value="中村">中村</option>
+          <option value="高良">高良</option>
+          <option value="天野">天野</option>
+          <option value="森田">森田</option>
+          <option value="関谷">関谷</option>
+          <option value="安田">安田</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">期限</label>
+        <input type="date" class="form-input" id="f-deadline">
+      </div>
+      <div class="form-group">
+        <label class="form-label">報告元</label>
+        <select class="form-select" id="f-source">
+          <option value="">—</option>
+          <option value="Slack">Slack</option>
+          <option value="LINE WORKS">LINE WORKS</option>
+          <option value="Chatwork">Chatwork</option>
+          <option value="メール">メール</option>
+          <option value="電話">電話</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">緊急度</label>
+        <div class="star-input" id="star-input">
+          <button type="button" class="star-btn" data-val="1">★</button>
+          <button type="button" class="star-btn" data-val="2">★</button>
+          <button type="button" class="star-btn" data-val="3">★</button>
+          <button type="button" class="star-btn" data-val="4">★</button>
+          <button type="button" class="star-btn" data-val="5">★</button>
+        </div>
+        <input type="hidden" id="f-stars" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea class="form-textarea" id="f-memo" placeholder="備考・メモ"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-secondary" onclick="closeForm()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveTask()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+// Notion APIを使う場合はここに設定（後で入力）
+const NOTION_TOKEN = '';   // secret_xxxxx
+const NOTION_DB_ID = '';   // データベースID
+
+// ===== STATE =====
+let tasks = [];
+let editingId = null;
+let currentDetailId = null;
+
+// ===== DEMO DATA =====
+const demoTasks = [
+  { id: 'd1', name: '板倉実業 VPN接続不可', cat: '障害', status: '進行中', assignee: '安田', deadline: getTodayStr(), source: 'Chatwork', stars: 5, memo: '朝9時から発生。折り返し連絡待ち。', created: '2026-04-15' },
+  { id: 'd2', name: 'SCMSメール送受信エラー', cat: '障害', status: '未着手', assignee: '', deadline: getTodayStr(), source: 'メール', stars: 4, memo: '', created: '2026-04-15' },
+  { id: 'd3', name: '山本実商店 Wi-Fi設定方法', cat: '問い合わせ', status: '完了', assignee: '森田', deadline: '2026-04-16', source: '電話', stars: 2, memo: '', created: '2026-04-15' },
+  { id: 'd4', name: '新規クライアント 初期設定相談', cat: '問い合わせ', status: '未着手', assignee: '', deadline: getTodayStr(), source: 'Slack', stars: 3, memo: '', created: '2026-04-15' },
+  { id: 'd5', name: 'SCMS ネットワーク構築', cat: '見積もり依頼', status: '進行中', assignee: '辻', deadline: '2026-04-16', source: 'LINE WORKS', stars: 3, memo: '', created: '2026-04-14' },
+  { id: 'd6', name: '月次請求書 送付確認', cat: '社内タスク', status: '未着手', assignee: '関谷', deadline: getTodayStr(), source: '', stars: 2, memo: '', created: '2026-04-15' },
+  { id: 'd7', name: 'GWS 初期設定 完了確認', cat: '社内タスク', status: '進行中', assignee: '関谷', deadline: '2026-04-18', source: '', stars: 1, memo: '', created: '2026-04-15' },
+];
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ===== NOTION API =====
+async function fetchFromNotion() {
+  if (!NOTION_TOKEN || !NOTION_DB_ID) return null;
+  try {
+    const res = await fetch(`https://api.notion.com/v1/databases/${NOTION_DB_ID}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sorts: [{ property: '作成日時', direction: 'ascending' }] })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.results.map(p => ({
+      id: p.id,
+      name: p.properties['名前']?.title?.[0]?.plain_text || '(無題)',
+      cat: p.properties['カテゴリー']?.select?.name || '',
+      status: p.properties['ステータス']?.status?.name || p.properties['ステータス']?.select?.name || '未着手',
+      assignee: p.properties['担当者']?.select?.name || '',
+      deadline: p.properties['期限']?.date?.start || '',
+      source: p.properties['報告元']?.select?.name || '',
+      stars: p.properties['緊急度']?.number || 0,
+      memo: p.properties['memo']?.rich_text?.[0]?.plain_text || '',
+      created: p.properties['作成日時']?.created_time?.slice(0,10) || '',
+      notionPageId: p.id
+    }));
+  } catch(e) { return null; }
+}
+
+async function addToNotion(task) {
+  if (!NOTION_TOKEN || !NOTION_DB_ID) return null;
+  try {
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        parent: { database_id: NOTION_DB_ID },
+        properties: buildNotionProps(task)
+      })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.id;
+  } catch(e) { return null; }
+}
+
+async function updateNotion(pageId, task) {
+  if (!NOTION_TOKEN || !pageId) return;
+  try {
+    await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ properties: buildNotionProps(task) })
+    });
+  } catch(e) {}
+}
+
+async function deleteFromNotion(pageId) {
+  if (!NOTION_TOKEN || !pageId) return;
+  try {
+    await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ archived: true })
+    });
+  } catch(e) {}
+}
+
+function buildNotionProps(task) {
+  const props = {
+    '名前': { title: [{ text: { content: task.name } }] },
+    'カテゴリー': { select: { name: task.cat } },
+    'ステータス': { select: { name: task.status } },
+    '担当者': { select: { name: task.assignee || '未定' } },
+    '報告元': { select: { name: task.source || '—' } },
+    '緊急度': { number: task.stars || 0 },
+    'memo': { rich_text: [{ text: { content: task.memo || '' } }] }
+  };
+  if (task.deadline) props['期限'] = { date: { start: task.deadline } };
+  return props;
+}
+
+// ===== RENDER =====
+function renderAll() {
+  const cats = ['障害','問い合わせ','社内タスク','見積もり依頼'];
+  cats.forEach(cat => {
+    const col = document.getElementById('col-' + cat);
+    const cnt = document.getElementById('count-' + cat);
+    const filtered = tasks.filter(t => t.cat === cat)
+      .sort((a,b) => (a.created||'').localeCompare(b.created||''));
+    cnt.textContent = filtered.length;
+    if (filtered.length === 0) {
+      col.innerHTML = '<div class="empty-state">タスクなし</div>';
+      return;
+    }
+    col.innerHTML = filtered.map(t => renderCard(t)).join('');
+  });
+}
+
+function deadlineClass(dl) {
+  if (!dl) return '';
+  const today = getTodayStr();
+  if (dl < today) return 'deadline-overdue';
+  if (dl === today) return 'deadline-today';
+  return 'deadline-ok';
+}
+
+function cardClass(dl) {
+  if (!dl) return '';
+  const today = getTodayStr();
+  if (dl < today) return 'overdue';
+  if (dl === today) return 'due-today';
+  return '';
+}
+
+function starsHtml(n) {
+  if (!n) return '<span style="color:var(--text3)">—</span>';
+  let h = '';
+  for (let i = 1; i <= 5; i++) h += `<span style="color:${i<=n?'var(--star)':'var(--border2)'}">★</span>`;
+  return h;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.replace(/-/g,'/');
+}
+
+function renderCard(t) {
+  const dc = deadlineClass(t.deadline);
+  const cc = cardClass(t.deadline);
+  const isOverdue = t.deadline && t.deadline < getTodayStr();
+  return `<div class="task-card ${cc}" onclick="openDetail('${t.id}')">
+    <div class="task-name">${esc(t.name)}${t.assignee ? `<span class="card-assignee">${esc(t.assignee)}</span>` : ''}</div>
+    <div class="card-fields">
+      <div class="card-field">
+        <span class="card-field-label">ステータス：</span>
+        <span class="task-status status-${t.status}">${t.status}</span>
+      </div>
+      <div class="card-field">
+        <span class="card-field-label">緊急度：</span>
+        <span class="task-stars">${starsHtml(t.stars)}</span>
+      </div>
+      <div class="card-field">
+        <span class="card-field-label">期限：</span>
+        ${t.deadline
+          ? `<span class="task-deadline ${dc}">${fmtDate(t.deadline)}${isOverdue ? ' <span class="overdue-label">※期限切れ</span>' : ''}</span>`
+          : '<span style="color:var(--text3)">—</span>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== DETAIL MODAL =====
+function openDetail(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  currentDetailId = id;
+  document.getElementById('d-name').textContent = t.name;
+  document.getElementById('d-cat').textContent = t.cat;
+  document.getElementById('d-status').innerHTML = `<span class="task-status status-${t.status}">${t.status}</span>`;
+  document.getElementById('d-assignee').textContent = t.assignee || '未定';
+  document.getElementById('d-deadline').innerHTML = t.deadline
+    ? `<span class="task-deadline ${deadlineClass(t.deadline)}">${fmtDate(t.deadline)}</span>` : '—';
+  document.getElementById('d-source').textContent = t.source || '—';
+  document.getElementById('d-stars').innerHTML = starsHtml(t.stars);
+  document.getElementById('d-created').textContent = fmtDate(t.created);
+  document.getElementById('d-memo').textContent = t.memo || '—';
+  document.getElementById('btn-edit-detail').onclick = () => { closeDetail(); openEditModal(id); };
+  document.getElementById('btn-delete-detail').onclick = () => deleteTask(id);
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('open');
+  currentDetailId = null;
+}
+
+function closeDetailIfOutside(e) {
+  if (e.target === document.getElementById('detail-overlay')) closeDetail();
+}
+
+// ===== ADD / EDIT MODAL =====
+function openAddModal(cat) {
+  editingId = null;
+  document.getElementById('form-title').textContent = 'タスクを登録';
+  document.getElementById('f-id').value = '';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-cat').value = cat;
+  document.getElementById('f-status').value = '未着手';
+  document.getElementById('f-assignee').value = '';
+  document.getElementById('f-deadline').value = '';
+  document.getElementById('f-source').value = '';
+  document.getElementById('f-memo').value = '';
+  setStars(0);
+  document.getElementById('form-overlay').classList.add('open');
+}
+
+function openEditModal(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('form-title').textContent = 'タスクを編集';
+  document.getElementById('f-id').value = id;
+  document.getElementById('f-name').value = t.name;
+  document.getElementById('f-cat').value = t.cat;
+  document.getElementById('f-status').value = t.status;
+  document.getElementById('f-assignee').value = t.assignee || '';
+  document.getElementById('f-deadline').value = t.deadline || '';
+  document.getElementById('f-source').value = t.source || '';
+  document.getElementById('f-memo').value = t.memo || '';
+  setStars(t.stars || 0);
+  document.getElementById('form-overlay').classList.add('open');
+}
+
+function closeForm() {
+  document.getElementById('form-overlay').classList.remove('open');
+  editingId = null;
+}
+
+function closeFormIfOutside(e) {
+  if (e.target === document.getElementById('form-overlay')) closeForm();
+}
+
+// ===== STARS =====
+function setStars(n) {
+  document.getElementById('f-stars').value = n;
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.val) <= n);
+  });
+}
+document.querySelectorAll('.star-btn').forEach(btn => {
+  btn.addEventListener('click', () => setStars(parseInt(btn.dataset.val)));
+});
+
+// ===== SAVE =====
+async function saveTask() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('タスク名を入力してください'); return; }
+  const task = {
+    name,
+    cat: document.getElementById('f-cat').value,
+    status: document.getElementById('f-status').value,
+    assignee: document.getElementById('f-assignee').value,
+    deadline: document.getElementById('f-deadline').value,
+    source: document.getElementById('f-source').value,
+    stars: parseInt(document.getElementById('f-stars').value) || 0,
+    memo: document.getElementById('f-memo').value.trim(),
+  };
+
+  if (editingId) {
+    const idx = tasks.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      const old = tasks[idx];
+      tasks[idx] = { ...old, ...task };
+      if (old.notionPageId) updateNotion(old.notionPageId, task);
+    }
+  } else {
+    const newId = 'local-' + Date.now();
+    task.id = newId;
+    task.created = getTodayStr();
+    tasks.push(task);
+    const notionId = await addToNotion(task);
+    if (notionId) {
+      const t = tasks.find(x => x.id === newId);
+      if (t) t.notionPageId = notionId;
+    }
+  }
+  closeForm();
+  renderAll();
+}
+
+// ===== DELETE =====
+async function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  const t = tasks.find(x => x.id === id);
+  if (t && t.notionPageId) deleteFromNotion(t.notionPageId);
+  tasks = tasks.filter(x => x.id !== id);
+  closeDetail();
+  renderAll();
+}
+
+// ===== INIT =====
+async function init() {
+  const notionData = await fetchFromNotion();
+  if (notionData) {
+    tasks = notionData;
+    document.getElementById('notion-status').classList.add('connected');
+    document.getElementById('notion-status-text').textContent = `Notion接続済み — ${tasks.length}件取得`;
+  } else {
+    tasks = [...demoTasks];
+  }
+  renderAll();
+}
+
+// ===== CLOCK =====
+function tick() {
+  const n = new Date();
+  const el = document.getElementById('clk');
+  if (el) el.textContent =
+    String(n.getHours()).padStart(2,'0') + ':' +
+    String(n.getMinutes()).padStart(2,'0') + ':' +
+    String(n.getSeconds()).padStart(2,'0');
+}
+tick(); setInterval(tick, 1000);
+
+// ===== AUTO REFRESH =====
+setInterval(async () => {
+  if (!NOTION_TOKEN || !NOTION_DB_ID) return;
+  const data = await fetchFromNotion();
+  if (data) { tasks = data; renderAll(); }
+}, 5 * 60 * 1000);
+
+init();
+</script>
+</body>
+</html>
